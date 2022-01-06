@@ -5,6 +5,10 @@
  */
 package resources;
 
+import com.mycompany.mhtabaap.BankLoanCalculatorService;
+import com.mycompany.mhtabaap.CalculationCustomException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -19,21 +23,28 @@ import javax.ws.rs.core.Response;
 @Path("/monthlypayment")
 public class MonthlyPaymentCalculator {
 
+    private static final BankLoanCalculatorService _bankLoanCalculatorService = BankLoanCalculatorService.getInstance();
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{anualIR}/{months}/{amount}")
-    public Response calculateMonthlyPayment(@PathParam("anualIR") double anualIR, @PathParam("months") int months, @PathParam("amount") double amount) throws Exception {
-        //TODO: check how to return bad request
+    public Response calculateMonthlyPayment(@PathParam("anualIR") double anualIR, @PathParam("months") int months, @PathParam("amount") double amount) {
         if (anualIR <= 0)
-            throw new Exception("Invalid argument: anualIR should be greater than 0");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid argument: anualIR should be greater than 0").build();
         if (months <= 0)
-            throw new Exception("Invalid argument: months should be greater than 0");
-        String output = "anualIR " + anualIR + ", months: " + months + ", amount: " + amount;
-        double monthlyIR = anualIR / 100 / 12;
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid argument: months should be greater than 0").build();
+        if (amount <= 0)
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid argument: amount should be greater than 0").build();
 
-        double discountFactor = (Math.pow(1 + monthlyIR, months) - 1) / (monthlyIR * Math.pow(1 + monthlyIR, months));
-        double monthlyPayment = amount / discountFactor;
-
-        return Response.status(200).entity(monthlyPayment).build();
+        try {
+            double monthlyPayment = _bankLoanCalculatorService.calculateMonthlyPayment(anualIR, months, amount);
+            return Response.status(200).entity(monthlyPayment).build();
+        } catch (CalculationCustomException ex) {
+            Logger.getLogger(MonthlyPaymentCalculator.class.getName()).log(Level.WARNING, null, ex);
+            return Response.status(Response.Status.BAD_REQUEST).entity(ex.getMessage()).build();
+        } catch (Exception ex) {
+            Logger.getLogger(MonthlyPaymentCalculator.class.getName()).log(Level.SEVERE, null, ex);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

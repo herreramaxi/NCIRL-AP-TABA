@@ -5,6 +5,7 @@
  */
 package resources;
 
+import com.mycompany.mhtabaap.BankLoanCalculatorService;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -19,17 +20,18 @@ import javax.ws.rs.core.Response;
 @Path("/totalrepayment")
 public class TotalRepaymentCalculator {
 
+    private static final BankLoanCalculatorService _bankLoanCalculatorService = BankLoanCalculatorService.getInstance();
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{monthlyPayment}/{months}")
-    public Response calculateTotalRepayment(@PathParam("monthlyPayment") double monthlyPayment, @PathParam("months") int months) throws Exception {
-        //TODO: check how to return bad request
+    public Response calculateTotalRepayment(@PathParam("monthlyPayment") double monthlyPayment, @PathParam("months") int months) {
         if (monthlyPayment <= 0)
-            throw new Exception("Invalid argument: monthlyPayment should be greater than 0");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid argument: monthlyPayment should be greater than 0").build();
         if (months <= 0)
-            throw new Exception("Invalid argument: months should be greater than 0");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid argument: months should be greater than 0").build();
 
-        double totalRepayment = monthlyPayment * months;
+        double totalRepayment = _bankLoanCalculatorService.calculateTotalRepayment(monthlyPayment, months);
 
         return Response.status(200).entity(totalRepayment).build();
     }
