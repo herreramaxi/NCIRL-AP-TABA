@@ -6,6 +6,7 @@
 package resources;
 
 import com.mycompany.mhtabaap.BankLoanCalculatorService;
+import com.mycompany.mhtabaap.CalculatorServiceResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -26,13 +27,9 @@ public class TotalRepaymentCalculator {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{monthlyPayment}/{months}")
     public Response calculateTotalRepayment(@PathParam("monthlyPayment") double monthlyPayment, @PathParam("months") int months) {
-        if (monthlyPayment <= 0)
-            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid argument: monthlyPayment should be greater than 0").build();
-        if (months <= 0)
-            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid argument: months should be greater than 0").build();
+        CalculatorServiceResponse response = _bankLoanCalculatorService.calculateTotalRepayment(monthlyPayment, months);
+        int statusCode = response.isSuccessful() ? 200 : 400;
 
-        double totalRepayment = _bankLoanCalculatorService.calculateTotalRepayment(monthlyPayment, months);
-
-        return Response.status(200).entity(totalRepayment).build();
+        return Response.status(statusCode).entity(response).build();
     }
 }

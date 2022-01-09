@@ -6,9 +6,7 @@
 package resources;
 
 import com.mycompany.mhtabaap.BankLoanCalculatorService;
-import com.mycompany.mhtabaap.CalculationCustomException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.mycompany.mhtabaap.CalculatorServiceResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -29,22 +27,9 @@ public class MonthlyPaymentCalculator {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{anualIR}/{months}/{amount}")
     public Response calculateMonthlyPayment(@PathParam("anualIR") double anualIR, @PathParam("months") int months, @PathParam("amount") double amount) {
-        if (anualIR <= 0)
-            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid argument: anualIR should be greater than 0").build();
-        if (months <= 0)
-            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid argument: months should be greater than 0").build();
-        if (amount <= 0)
-            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid argument: amount should be greater than 0").build();
+        CalculatorServiceResponse response = _bankLoanCalculatorService.calculateMonthlyPayment(anualIR, months, amount);
+        int statusCode = response.isSuccessful() ? 200 : 400;
 
-        try {
-            double monthlyPayment = _bankLoanCalculatorService.calculateMonthlyPayment(anualIR, months, amount);
-            return Response.status(200).entity(monthlyPayment).build();
-        } catch (CalculationCustomException ex) {
-            Logger.getLogger(MonthlyPaymentCalculator.class.getName()).log(Level.WARNING, null, ex);
-            return Response.status(Response.Status.BAD_REQUEST).entity(ex.getMessage()).build();
-        } catch (Exception ex) {
-            Logger.getLogger(MonthlyPaymentCalculator.class.getName()).log(Level.SEVERE, null, ex);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
-        }
+        return Response.status(statusCode).entity(response).build();
     }
 }
